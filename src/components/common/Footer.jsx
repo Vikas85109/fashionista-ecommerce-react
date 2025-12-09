@@ -40,14 +40,14 @@ const Footer = () => {
           <h4>Contact</h4>
           <ul>
             <li>Email: support@fashionista.com</li>
-            <li>Phone: +91 98765 43210</li>
+            <li>Phone: +91 12345 67890</li>
             <li>Mon - Sat: 9AM - 8PM</li>
           </ul>
         </div>
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; 2024 Fashionista. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Fashionista. All rights reserved.</p>
       </div>
     </footer>
   );

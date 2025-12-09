@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useToast } from '../components/common/ToastContainer';
 import { FiHeart, FiShoppingCart, FiStar, FiMinus, FiPlus, FiChevronRight } from 'react-icons/fi';
 import ProductCard from '../components/product/ProductCard';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { products, dispatch, isInWishlist, user } = useShop();
+  const { showSuccess, showWarning, showError } = useToast();
   const product = products.find(p => p.id === parseInt(id));
 
   const [selectedSize, setSelectedSize] = useState('');
@@ -31,8 +34,12 @@ const ProductDetail = () => {
     .slice(0, 4);
 
   const handleAddToCart = () => {
+    if (!product.inStock) {
+      showError('This product is currently out of stock');
+      return;
+    }
     if (!selectedSize || !selectedColor) {
-      alert('Please select size and color');
+      showWarning('Please select size and color');
       return;
     }
     dispatch({
@@ -45,16 +52,23 @@ const ProductDetail = () => {
         quantity
       }
     });
+    showSuccess(`${product.name} added to cart!`);
   };
 
   const handleWishlistToggle = () => {
     dispatch({ type: 'TOGGLE_WISHLIST', payload: product });
+    showSuccess(inWishlist ? 'Removed from wishlist' : 'Added to wishlist!');
   };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
     if (!user) {
-      alert('Please login to submit a review');
+      showWarning('Please login to submit a review');
+      navigate('/auth');
+      return;
+    }
+    if (!reviewText.trim()) {
+      showWarning('Please write a review');
       return;
     }
     dispatch({
@@ -63,7 +77,7 @@ const ProductDetail = () => {
     });
     setReviewText('');
     setReviewRating(5);
-    alert('Review submitted successfully!');
+    showSuccess('Review submitted successfully!');
   };
 
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);

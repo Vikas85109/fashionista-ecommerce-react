@@ -1,14 +1,26 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useToast } from '../components/common/ToastContainer';
 import CartItem from '../components/cart/CartItem';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { FiShoppingBag, FiArrowRight } from 'react-icons/fi';
 
 const Cart = () => {
   const { cart, getCartTotal, dispatch } = useShop();
+  const { showSuccess } = useToast();
+  const [showClearModal, setShowClearModal] = useState(false);
+
   const subtotal = getCartTotal();
   const shipping = subtotal > 100 ? 0 : 10;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+
+  const handleClearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+    setShowClearModal(false);
+    showSuccess('Cart cleared successfully');
+  };
 
   if (cart.length === 0) {
     return (
@@ -43,7 +55,7 @@ const Cart = () => {
 
           <button
             className="btn btn-outline clear-cart"
-            onClick={() => dispatch({ type: 'CLEAR_CART' })}
+            onClick={() => setShowClearModal(true)}
           >
             Clear Cart
           </button>
@@ -87,6 +99,15 @@ const Cart = () => {
           </Link>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showClearModal}
+        title="Clear Cart"
+        message="Are you sure you want to remove all items from your cart? This action cannot be undone."
+        onConfirm={handleClearCart}
+        onCancel={() => setShowClearModal(false)}
+        confirmText="Clear Cart"
+      />
     </div>
   );
 };

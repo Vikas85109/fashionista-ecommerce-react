@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useToast } from '../components/common/ToastContainer';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,29 +13,58 @@ const Auth = () => {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { dispatch } = useShop();
   const navigate = useNavigate();
+  const { showSuccess } = useToast();
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!isLogin && !formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: '' });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    if (!validateForm()) return;
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+    setIsLoading(true);
 
-    // Simulate authentication
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     const user = {
       id: Date.now(),
       name: isLogin ? formData.email.split('@')[0] : formData.name,
@@ -41,6 +72,8 @@ const Auth = () => {
     };
 
     dispatch({ type: 'LOGIN', payload: user });
+    showSuccess(isLogin ? 'Welcome back!' : 'Account created successfully!');
+    setIsLoading(false);
     navigate('/');
   };
 
@@ -58,7 +91,7 @@ const Auth = () => {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {!isLogin && (
-            <div className="form-group">
+            <div className={`form-group ${errors.name ? 'error' : ''}`}>
               <label>Full Name</label>
               <input
                 type="text"
@@ -66,12 +99,12 @@ const Auth = () => {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter your name"
-                required
               />
+              {errors.name && <span className="form-error">{errors.name}</span>}
             </div>
           )}
 
-          <div className="form-group">
+          <div className={`form-group ${errors.email ? 'error' : ''}`}>
             <label>Email Address</label>
             <input
               type="email"
@@ -79,39 +112,59 @@ const Auth = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              required
             />
+            {errors.email && <span className="form-error">{errors.email}</span>}
           </div>
 
-          <div className="form-group">
+          <div className={`form-group ${errors.password ? 'error' : ''}`}>
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+            {errors.password && <span className="form-error">{errors.password}</span>}
           </div>
 
           {!isLogin && (
-            <div className="form-group">
+            <div className={`form-group ${errors.confirmPassword ? 'error' : ''}`}>
               <label>Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+              {errors.confirmPassword && <span className="form-error">{errors.confirmPassword}</span>}
             </div>
           )}
 
-          {error && <p className="error-message">{error}</p>}
-
-          <button type="submit" className="btn btn-primary btn-full">
+          <button
+            type="submit"
+            className={`btn btn-primary btn-full ${isLoading ? 'loading' : ''}`}
+            disabled={isLoading}
+          >
             {isLogin ? 'Sign In' : 'Create Account'}
           </button>
         </form>
@@ -127,7 +180,8 @@ const Auth = () => {
               type="button"
               onClick={() => {
                 setIsLogin(!isLogin);
-                setError('');
+                setErrors({});
+                setFormData({ name: '', email: '', password: '', confirmPassword: '' });
               }}
             >
               {isLogin ? 'Sign Up' : 'Sign In'}

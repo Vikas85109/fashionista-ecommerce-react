@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
+import { useToast } from './ToastContainer';
 import { FiShoppingCart, FiHeart, FiUser, FiSearch, FiMenu, FiX } from 'react-icons/fi';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { getCartCount, wishlist, user, dispatch } = useShop();
+  const { showSuccess, showInfo } = useToast();
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (!searchQuery.trim()) {
+      showInfo('Please enter a search term');
+      return;
+    }
     dispatch({ type: 'SET_FILTERS', payload: { searchQuery } });
     navigate('/products');
     setSearchQuery('');
@@ -18,6 +24,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch({ type: 'LOGOUT' });
+    showSuccess('Logged out successfully');
     navigate('/');
   };
 
@@ -28,14 +35,15 @@ const Navbar = () => {
           <span className="logo-text">FASHIONISTA</span>
         </Link>
 
-        <form className="nav-search" onSubmit={handleSearch}>
+        <form className="nav-search" onSubmit={handleSearch} role="search">
           <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search products"
           />
-          <button type="submit">
+          <button type="submit" aria-label="Submit search">
             <FiSearch />
           </button>
         </form>
@@ -48,19 +56,19 @@ const Navbar = () => {
         </div>
 
         <div className="nav-actions">
-          <Link to="/wishlist" className="nav-icon">
+          <Link to="/wishlist" className="nav-icon" aria-label={`Wishlist${wishlist.length > 0 ? `, ${wishlist.length} items` : ''}`}>
             <FiHeart />
             {wishlist.length > 0 && <span className="badge">{wishlist.length}</span>}
           </Link>
 
-          <Link to="/cart" className="nav-icon">
+          <Link to="/cart" className="nav-icon" aria-label={`Shopping cart${getCartCount() > 0 ? `, ${getCartCount()} items` : ''}`}>
             <FiShoppingCart />
             {getCartCount() > 0 && <span className="badge">{getCartCount()}</span>}
           </Link>
 
           {user ? (
             <div className="user-menu">
-              <button className="nav-icon user-btn">
+              <button className="nav-icon user-btn" aria-label="User menu" aria-haspopup="true">
                 <FiUser />
               </button>
               <div className="user-dropdown">
@@ -70,12 +78,17 @@ const Navbar = () => {
               </div>
             </div>
           ) : (
-            <Link to="/auth" className="nav-icon">
+            <Link to="/auth" className="nav-icon" aria-label="Sign in">
               <FiUser />
             </Link>
           )}
 
-          <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button
+            className="menu-toggle"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMenuOpen}
+          >
             {isMenuOpen ? <FiX /> : <FiMenu />}
           </button>
         </div>
