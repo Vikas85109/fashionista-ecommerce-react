@@ -717,6 +717,14 @@ img {
   padding: 8px;
   border: 1px solid var(--gray-light);
   border-radius: var(--radius);
+  background: var(--light);
+  color: var(--dark);
+}
+
+.price-inputs input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--white);
 }
 
 .filter-section select {
@@ -725,6 +733,13 @@ img {
   border: 1px solid var(--gray-light);
   border-radius: var(--radius);
   cursor: pointer;
+  background: var(--light);
+  color: var(--dark);
+}
+
+.filter-section select:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 /* ==================== */
@@ -982,6 +997,13 @@ img {
   border: 1px solid var(--gray-light);
   border-radius: var(--radius);
   margin-left: 8px;
+  background: var(--light);
+  color: var(--dark);
+}
+
+.rating-input select:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .review-form textarea {
@@ -992,6 +1014,19 @@ img {
   border-radius: var(--radius);
   margin-bottom: 16px;
   resize: vertical;
+  background: var(--light);
+  color: var(--dark);
+  font-family: inherit;
+}
+
+.review-form textarea::placeholder {
+  color: var(--gray);
+}
+
+.review-form textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--white);
 }
 
 .related-products h2 {
@@ -1293,11 +1328,18 @@ img {
   border: 1px solid var(--gray-light);
   border-radius: var(--radius);
   font-size: 14px;
+  background: var(--light);
+  color: var(--dark);
+}
+
+.form-group input::placeholder {
+  color: var(--gray);
 }
 
 .form-group input:focus {
   outline: none;
   border-color: var(--primary);
+  background: var(--white);
 }
 
 .secure-badge {
