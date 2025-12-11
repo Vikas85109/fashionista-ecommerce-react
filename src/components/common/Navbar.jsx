@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import { useToast } from './ToastContainer';
@@ -7,19 +7,49 @@ import { FiShoppingCart, FiHeart, FiUser, FiSearch, FiMenu, FiX } from 'react-ic
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { getCartCount, wishlist, user, dispatch } = useShop();
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+  const { getCartCount, wishlist, user, dispatch, products } = useShop();
   const { showSuccess, showInfo } = useToast();
   const navigate = useNavigate();
 
+  // Filter products based on search query
+  const searchResults = searchQuery.trim().length >= 2
+    ? products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 5) // Limit to 5 results
+    : [];
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      showInfo('Please enter a search term');
-      return;
-    }
-    dispatch({ type: 'SET_FILTERS', payload: { searchQuery } });
+    // if (!searchQuery.trim()) {
+    //   showInfo('Please enter a search term');
+    //   return;
+    // }
+    // Reset category to 'all' when searching so results aren't filtered by previous category
+    dispatch({ type: 'SET_FILTERS', payload: { searchQuery: searchQuery.trim(), category: 'all' } });
     navigate('/products');
+    // setSearchQuery('');
+    setShowResults(false);
+  };
+
+  const handleResultClick = (productId) => {
     setSearchQuery('');
+    setShowResults(false);
+    navigate(`/product/${productId}`);
   };
 
   const handleLogout = () => {
@@ -35,18 +65,66 @@ const Navbar = () => {
           <span className="logo-text">FASHIONISTA</span>
         </Link>
 
-        <form className="nav-search" onSubmit={handleSearch} role="search">
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search products"
-          />
-          <button type="submit" aria-label="Submit search">
-            <FiSearch />
-          </button>
-        </form>
+        <div className="nav-search-container" ref={searchRef}>
+          <form className="nav-search" onSubmit={handleSearch} role="search">
+            <input
+              type="search"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchQuery(value);
+                // Only show results if there's at least 2 characters
+                setShowResults(value.trim().length >= 2);
+              }}
+              onInput={(e) => {
+                // Handle native clear button (X) click on search input
+                if (e.target.value === '') {
+                  setSearchQuery('');
+                  setShowResults(false);
+                }
+              }}
+              onFocus={() => setShowResults(searchQuery.trim().length >= 2)}
+              aria-label="Search products"
+            />
+            <button type="submit" aria-label="Submit search">
+              <FiSearch />
+            </button>
+          </form>
+
+          {showResults && searchQuery.trim().length >= 2 && (
+            <div className="search-results-dropdown">
+              {searchResults.length > 0 ? (
+                <>
+                  {searchResults.map(product => (
+                    <div
+                      key={product.id}
+                      className="search-result-item"
+                      onClick={() => handleResultClick(product.id)}
+                    >
+                      <img src={product.image} alt={product.name} />
+                      <div className="search-result-info">
+                        <span className="search-result-name">{product.name}</span>
+                        <span className="search-result-price">${product.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="search-view-all"
+                    onClick={handleSearch}
+                  >
+                    View all results
+                  </button>
+                </>
+              ) : (
+                <div className="search-no-results">
+                  No products found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
           <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>

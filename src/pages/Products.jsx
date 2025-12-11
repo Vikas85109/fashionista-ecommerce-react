@@ -12,7 +12,8 @@ const Products = () => {
   useEffect(() => {
     const category = searchParams.get('category');
     if (category) {
-      dispatch({ type: 'SET_FILTERS', payload: { category } });
+      // When navigating via category link, set category and clear search
+      dispatch({ type: 'SET_FILTERS', payload: { category, searchQuery: '' } });
     }
   }, [searchParams, dispatch]);
 
